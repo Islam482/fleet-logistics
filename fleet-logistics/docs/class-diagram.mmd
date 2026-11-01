@@ -1,0 +1,86 @@
+classDiagram
+direction TB
+
+%% ---------- Observer side ----------
+class Event { <<interface>> +type() EventType }
+class VehicleEvent { <<interface>> +vehicleId() String }
+class Subject~E~ { <<interface>> +subscribe(EventType, Observer) +unsubscribe(EventType, Observer) }
+class Observer~E~ { <<interface>> +onEvent(E) }
+class EventHub~E~ {
+  -registry EnumMap~EventType, CopyOnWriteArrayList~
+  +publish(E)
+}
+class GpsFeed
+class FuelFeed
+class MapDisplay
+class EtaCalculator
+class GeofenceAlarm
+class FuelMonitor
+class DepotAggregator
+class DepotDashboard
+class AlertService
+class TicketLog
+
+Event <|-- VehicleEvent
+Subject <|.. EventHub
+EventHub <|-- GpsFeed
+EventHub <|-- FuelFeed
+EventHub <|-- DepotAggregator
+EventHub <|-- AlertService
+Observer <|.. MapDisplay
+Observer <|.. EtaCalculator
+Observer <|.. GeofenceAlarm
+Observer <|.. FuelMonitor
+Observer <|.. DepotAggregator
+Observer <|.. DepotDashboard
+Observer <|.. AlertService
+Observer <|.. TicketLog
+GeofenceAlarm ..> EventHub : publishes alerts
+FuelMonitor ..> EventHub : publishes alerts
+
+%% ---------- Visitor side ----------
+class FleetElement { <<interface>> +id() String +accept(FleetVisitor~R~) R }
+class Fleet
+class Depot
+class Truck
+class Van
+class Drone
+class ChargingStation
+class CargoBike
+class FleetVisitor~R~ { <<interface>> +visit(Fleet) +visit(Depot) +visit(Truck) +visit(Van) +visit(Drone) +visit(CargoBike) +visit(ChargingStation) }
+class FoldingVisitor~R~ { <<abstract>> #neutral() R #combine(R, R) R }
+class MaintenanceCostVisitor
+class FuelCostVisitor
+class Co2ReportVisitor
+class InspectionVisitor
+class JsonExportVisitor
+
+FleetElement <|.. Fleet
+FleetElement <|.. Depot
+FleetElement <|.. Truck
+FleetElement <|.. Van
+FleetElement <|.. Drone
+FleetElement <|.. ChargingStation
+FleetElement <|.. CargoBike
+Fleet o-- Depot : 1..*
+Depot o-- FleetElement : assets
+FleetVisitor <|.. FoldingVisitor
+FleetVisitor <|.. JsonExportVisitor
+FoldingVisitor <|-- MaintenanceCostVisitor
+FoldingVisitor <|-- FuelCostVisitor
+FoldingVisitor <|-- Co2ReportVisitor
+FoldingVisitor <|-- InspectionVisitor
+FleetElement ..> FleetVisitor : accept() calls visit(this)
+
+%% ---------- Integration and composition ----------
+class FleetDirectory { +depotOf(assetId) Optional~Depot~ }
+class FleetSimulator { +start() +run() +close() }
+class CompositionRoot { +assemble(config, scenario, handler) FleetSystem }
+
+AlertService ..> FleetDirectory : alert -> depot
+AlertService ..> InspectionVisitor : runs on depot subtree
+AlertService ..> MaintenanceCostVisitor : runs on depot subtree
+FleetDirectory ..> Depot
+FleetSimulator ..> GpsFeed : 3+ producer threads
+FleetSimulator ..> FuelFeed
+CompositionRoot ..> FleetSimulator : creates and wires everything
