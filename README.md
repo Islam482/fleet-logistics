@@ -26,7 +26,7 @@ FuelFeed ─FUEL_READING──▶ FuelMonitor ───────────�
 Integration link: **AlertService** (Observer side) calls **InspectionVisitor** and **MaintenanceCostVisitor**
 (Visitor side) on the depot of the alerted vehicle only. Alert, inspection, ticket.
 
-![class diagram](docs/class-diagram.png)
+![class diagram](fleet-logistics/docs/class-diagram.png)
 
 The diagram source is `docs/class-diagram.mmd` (Mermaid, rendered below by GitHub).
 
